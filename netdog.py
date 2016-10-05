@@ -19,7 +19,7 @@ def usage():
     print"""
 -------------------------------------------------------------------------------
 
-BHP Net Tool
+NetDog Tool
 
 Usage: netdog.py -t target_host -p port
 -l --listen              -listen on [host]:[port] for incoming connections
