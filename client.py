@@ -7,8 +7,8 @@ def client_tcp():
         AF_INET: set the default protocol IPV4
         SOCK_STREAM: set client as TCP
     """
-    target_host = 'www.duckduckgo.com'
-    target_port = 80
+    target_host = '127.0.0.1'
+    target_port = 9000
 
     # Create socket object
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -17,7 +17,7 @@ def client_tcp():
     client.connect((target_host, target_port, ))
 
     # Send data
-    client.send('GET / HTTP/1.1\r\nHost: duckduckgo.com\r\n\r\n')
+    client.send('GET / HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n')
 
     # Receive data
     response = client.recv(4096)
@@ -33,7 +33,7 @@ def client_udp():
     """
 
     target_host = '127.0.0.1'
-    target_port = 80
+    target_port = 9000
 
     # Create socket object
     client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
