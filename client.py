@@ -2,7 +2,7 @@ import socket
 
 
 def client_tcp():
-    """Responsible for get page duckduckgo.com
+    """Get page duckduckgo.com
 
         AF_INET: set the default protocol IPV4
         SOCK_STREAM: set client as TCP
@@ -26,7 +26,25 @@ def client_tcp():
 
 
 def client_udp():
-    print 'Client UDP'
+    """Send packages for localhost
+
+        AF_INET: set the default protocol IPV4
+        SOCK_DGRAM: set client as UDP
+    """
+
+    target_host = '127.0.0.1'
+    target_port = 80
+
+    # Create socket object
+    client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    # Send data
+    client.sendto("Hello my friend!", (target_host, target_port, ))
+
+    # Receive data
+    data, addr = client.recvfrom(4096)
+
+    print data
 
 
 def main():
