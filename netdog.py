@@ -40,29 +40,6 @@ Examples:
     sys.exit(0)
 
 
-def client_handler():
-    pass
-
-
-def server_loop():
-    global target
-
-    if not len(target):
-        target = '0.0.0.0'
-
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((target, port, ))
-    server.listen(5)
-
-    while True:
-        client_socket, addr = server.accept()
-
-        # Open thread for client
-        client_thread = threading.Thread(target=client_handler,
-            args=(client_socket, ))
-        client_thread.start()
-
-
 def run_command(command):
 
     # Remove break line
@@ -79,6 +56,83 @@ def run_command(command):
         output = 'Failed to execute command \r\n'
 
     return output
+
+
+def client_handler(client_socket):
+    global upload
+    global execute
+    global command
+
+    # Check if upload
+    if len(upload_destination):
+
+        # Read bytes e write on destination
+        file_buffer = ''
+
+        # Keep read data until there isn't more available
+        while True:
+            data = client_socket.recv(1024)
+
+            if not data:
+                break
+
+            file_buffer += data
+
+        # Write bytes
+        try:
+            file_descriptor = open(upload_destination, 'wb')
+            file_descriptor.write(file_buffer)
+            file_descriptor.close()
+
+            # Confirm that recorded filec
+            client_socket.send(
+                'Successfully saved file to {} \r\n'.format(
+                    upload_destination))
+        except:
+            client_socket.send(
+                'Failed to save file to {}'.format(upload_destination))
+
+        # Checks whether command execution
+        if len(execute):
+            # Run other command
+            output = run_command(execute)
+            client_socket.send(output)
+
+        # Enter another loop if the command shell was executed
+        if command:
+            while True:
+                # Render simple prompt
+                client_socket.send('<NetDog: #> ')
+                # Enter (Return) to continue...
+                cmd_buffer = ''
+
+                while '\n' not in cmd_buffer:
+                    cmd_buffer += client_socket.recv(1024)
+
+                    # Send back the command output
+                    response = run_command(cmd_buffer)
+
+                    # Send back the response
+                    client_socket.send(response)
+
+
+def server_loop():
+    global target
+
+    if not len(target):
+        target = '0.0.0.0'
+
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((target, port, ))
+    server.listen(5)
+
+    while True:
+        client_socket, addr = server.accept()
+
+        # Open thread for client
+        client_thread = threading.Thread(
+            target=client_handler, args=(client_socket, ))
+        client_thread.start()
 
 
 def client_sender(buffer):
@@ -131,7 +185,8 @@ def main():
 
     # Set params
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hle:t:c:p:cu',
+        opts, args = getopt.getopt(
+            sys.argv[1:], 'hle:t:c:p:cu',
             ['help', 'listen', 'execute', 'target', 'port', 'command',
                 'upload'])
     except getopt.GetoptError as err:
