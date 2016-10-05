@@ -79,5 +79,42 @@ def main():
         server_loop()
 
 
+def client_sender(buffer):
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    try:
+        # Connects to host
+        client.connect((target, port, ))
+
+        if len(buffer):
+            client.send(buffer)
+
+        while True:
+            # Wait to receive data
+            recv_len = 1
+            response = ''
+
+            while recv_len:
+
+                data = client.recv(4096)
+                recv_len = len(data)
+                response += data
+
+                if recv_len < 4096:
+                    break
+
+            print response
+
+            # Wait for further input data
+            buffer = raw_input('')
+            buffer += '\n'
+
+            # Send data
+            client.send(buffer)
+    except:
+        print '[*] Exception! Exiting'
+        client.close()
+
+
 if __name__ == '__main__':
     main()
