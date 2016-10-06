@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import sys
 import socket
 import getopt
@@ -30,9 +32,9 @@ Usage: netdog.py -t target_host -p port
 
 Examples:
 
-1) netdog.py -t 192.168.1.1 -p 5555 -l -c
-2) netdog.py -t 192.168.1.1 -p 5555 -l -u=/home/john/Documents/install.sh
-3) netdog.py -t 192.168.1.1 -p 5555 -l -e=\"cat /etc/passwd\
+1) ./netdog.py -t 192.168.1.1 -p 5555 -l -c
+2) ./netdog.py -t 192.168.1.1 -p 5555 -l -u=/home/john/Documents/install.sh
+3) ./netdog.py -t 192.168.1.1 -p 5555 -l -e=\"cat /etc/passwd\
 4) echo "Hello my friend!" | ./netdog.py -t 192.168.11.12 -p 9000
 
 -------------------------------------------------------------------------------
@@ -49,7 +51,7 @@ def run_command(command):
     try:
         output = subprocess.check_output(
             command,
-            stderr=subprocess.STOUT,
+            stderr=subprocess.STDOUT,
             shell=True
         )
     except:
@@ -75,8 +77,8 @@ def client_handler(client_socket):
 
             if not data:
                 break
-
-            file_buffer += data
+            else:
+                file_buffer += data
 
         # Write bytes
         try:
@@ -92,38 +94,39 @@ def client_handler(client_socket):
             client_socket.send(
                 'Failed to save file to {}'.format(upload_destination))
 
-        # Checks whether command execution
-        if len(execute):
-            # Run other command
-            output = run_command(execute)
-            client_socket.send(output)
+    # Checks whether command execution
+    if len(execute):
+        # Run other command
+        output = run_command(execute)
+        client_socket.send(output)
 
-        # Enter another loop if the command shell was executed
-        if command:
-            while True:
-                # Render simple prompt
-                client_socket.send('<NetDog: #> ')
-                # Enter (Return) to continue...
-                cmd_buffer = ''
+    # Enter another loop if the command shell was executed
+    if command:
+        while True:
+            # Render simple prompt
+            client_socket.send('<NetDog: #> ')
+            # Enter (Return) to continue...
+            cmd_buffer = ''
 
-                while '\n' not in cmd_buffer:
-                    cmd_buffer += client_socket.recv(1024)
+            while '\n' not in cmd_buffer:
+                cmd_buffer += client_socket.recv(1024)
 
-                    # Send back the command output
-                    response = run_command(cmd_buffer)
+                # Send back the command output
+                response = run_command(cmd_buffer)
 
-                    # Send back the response
-                    client_socket.send(response)
+                # Send back the response
+                client_socket.send(response)
 
 
 def server_loop():
     global target
+    global port
 
     if not len(target):
         target = '0.0.0.0'
 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((target, port, ))
+    server.bind((target, port))
     server.listen(5)
 
     while True:
@@ -140,7 +143,7 @@ def client_sender(buffer):
 
     try:
         # Connects to host
-        client.connect((target, port, ))
+        client.connect((target, port))
 
         if len(buffer):
             client.send(buffer)
@@ -159,7 +162,7 @@ def client_sender(buffer):
                 if recv_len < 4096:
                     break
 
-            print response
+            print response,
 
             # Wait for further input data
             buffer = raw_input('')
@@ -186,11 +189,12 @@ def main():
     # Set params
     try:
         opts, args = getopt.getopt(
-            sys.argv[1:], 'hle:t:c:p:cu',
+            sys.argv[1:], 'hle:t:p:cu:',
             ['help', 'listen', 'execute', 'target', 'port', 'command',
                 'upload'])
     except getopt.GetoptError as err:
         print str(err)
+        usage()
 
     for option, argument in opts:
         if option in ('-h', '--help'):
