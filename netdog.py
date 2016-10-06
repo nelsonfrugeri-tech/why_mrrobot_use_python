@@ -47,7 +47,7 @@ def run_command(command):
     # Remove break line
     command = command.rstrip()
 
-    # Run command and get data of output
+    # Run command and get the output back
     try:
         output = subprocess.check_output(
             command,
@@ -71,22 +71,22 @@ def client_handler(client_socket):
         # Read bytes e write on destination
         file_buffer = ''
 
-        # Keep read data until there isn't more available
+        # Keep reading data until there isn't more available
         while True:
             data = client_socket.recv(1024)
 
             if not data:
                 break
-            else:
-                file_buffer += data
 
-        # Write bytes
+            file_buffer += data
+
+        # Now we take these bytes and try to write them out
         try:
             file_descriptor = open(upload_destination, 'wb')
             file_descriptor.write(file_buffer)
             file_descriptor.close()
 
-            # Confirm that recorded filec
+            # Acknowledge that we wrote the file out
             client_socket.send(
                 'Successfully saved file to {} \r\n'.format(
                     upload_destination))
@@ -94,24 +94,25 @@ def client_handler(client_socket):
             client_socket.send(
                 'Failed to save file to {}'.format(upload_destination))
 
-    # Checks whether command execution
+    # Check for command execution
     if len(execute):
         # Run other command
         output = run_command(execute)
         client_socket.send(output)
 
-    # Enter another loop if the command shell was executed
+    # Now we go into another loop if a command shell was requested
     if command:
         while True:
-            # Render simple prompt
+            # Show a simple prompt
             client_socket.send('<NetDog: #> ')
-            # Enter (Return) to continue...
+            # Now we receive until we see a linefeed (enter key)
             cmd_buffer = ''
 
             while '\n' not in cmd_buffer:
                 cmd_buffer += client_socket.recv(1024)
 
-                # Send back the command output
+                # We have a valid command so execute it and
+                # send back the results
                 response = run_command(cmd_buffer)
 
                 # Send back the response
@@ -149,7 +150,7 @@ def client_sender(buffer):
             client.send(buffer)
 
         while True:
-            # Wait to receive data
+            # Now wait for data back
             recv_len = 1
             response = ''
 
@@ -164,11 +165,11 @@ def client_sender(buffer):
 
             print response,
 
-            # Wait for further input data
+            # Wait for more input
             buffer = raw_input('')
             buffer += '\n'
 
-            # Send data
+            # Send it off
             client.send(buffer)
     except:
         print '[*] Exception! Exiting'
@@ -186,7 +187,7 @@ def main():
     if not len(sys.argv[1:]):
         usage()
 
-    # Set params
+    # Read the commandline options
     try:
         opts, args = getopt.getopt(
             sys.argv[1:], 'hle:t:p:cu:',
@@ -215,9 +216,17 @@ def main():
             assert False, 'Unhandled option'
 
     if not listen and len(target) and port > 0:
+        # Read in the buffer from the commandline
+        # this will block, so send CTRL-D if not sending input
+        # to stdin
         buffer = sys.stdin.read()
+
+        # Send data off
         client_sender(buffer)
 
+    # We are going to listen and potentially
+    # upload things, execute commands and drop a shell back
+    # depending on our command line options above
     if listen:
         server_loop()
 
