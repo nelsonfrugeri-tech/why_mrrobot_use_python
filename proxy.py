@@ -5,8 +5,106 @@ import socket
 import threading
 
 
-def proxy_handler():
-    pass
+def hexdump(src, length=16):
+    result = []
+    digits = 4 if isinstance(src, unicode) else 2
+
+    for i in xrange(0, len(src), length):
+        s = src[i:i + length]
+        hexa = b' '.join(['%0*X' % (digits, ord(x)) for x in s])
+        text = b''.join([x if 0x20 <= ord(x) < 0x7F else b'.' for x in s])
+        result.append( b'%04X   %-*s   %s' % (i, length*(digits + 1), hexa, text))
+
+    print b'\n'.join(result)
+
+
+def receive_from(connection):
+    buffer = ''
+
+    # We set a 2 second time out depending on your
+    # target this may nedd to be adjusted
+    connection.settimeout(2)
+
+    try:
+        while True:
+            # Receive data from the socket
+            data = connection.recv(4096)
+
+            if not data:
+                break
+
+            buffer += data
+    except:
+        pass
+
+    return buffer
+
+
+def request_handler(buffer):
+    """Modify any request destined for the remote host"""
+    return buffer
+
+
+def response_handler(buffer):
+    # Modify any responses destined for the local host
+    return buffer
+
+
+def proxy_handler(client_socket, remotehost, remoteport, receive_first):
+
+    # Connect to the remote host
+    remote_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    remote_socket.connect((remotehost, remoteport, ))
+
+    # Receive data from the remote end if necessary
+    if receive_first:
+        remote_buffer = receive_from(remote_socket)
+        hexdump(remote_buffer)
+
+        # Send it to our response handler
+        remote_buffer = response_handler(remote_buffer)
+
+        # If we have data to send to our local client sent it
+        if len(remote_buffer):
+            print '[<===] Sending {} bytes to localhost'.format(
+                len(remote_buffer))
+            client_socket.send(remote_buffer)
+
+    # Now let's loop and reading from local, send to remote, send to local
+    # Rinse, wash and repeat
+    while True:
+        # Read from localhost
+        local_buffer = receive_from(client_socket)
+
+        if len(local_buffer):
+            print '[===>] Received {} bytes from localhost'.format(
+                len(local_buffer))
+
+            # Send it to our request handler
+            local_buffer = request_handler(local_buffer)
+
+            # Send off the data to the remote host
+            print '[===>] Sent to remote'
+
+        if len(remote_buffer):
+            print '[<===] Received {} bytes from remote'.format(
+                len(remote_buffer))
+            hexdump(remote_buffer)
+
+            # Send to our response handler
+            remote_buffer = response_handler(remote_buffer)
+
+            # Send the response to the local socket
+            client_socket.send(remote_buffer)
+
+            print '[<===] Sent to localhost'
+
+        if not len(local_buffer) or not len(remote_buffer):
+            client_socket.close()
+            remote_socket.close()
+            print '[*] No more data. Closing connections...'
+
+            break
 
 
 def server_loop(localhost, localport, remotehost, remoteport, receive_first):
