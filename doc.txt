@@ -1,0 +1,39 @@
+# Anotação 
+
+Sniffers: são softwares de rede que permitem ver
+pacotes entrando e saindo de um computador alvo.
+Exitem diversas aplicações, tanto para antes como
+para depois da exploração de falha.
+
+Programas sniffers: wireshark.org
+
+Pacote Python: Scapy
+
+Vantagem de se escrever seu próprio sniffer em Python
+é poder visualizer e decodificar o tráfego de rede.
+
+Sockets puros e sniffing
+
+Vamos usar os sockets puros para acessar as
+informações de rede dos níveis mais baixos, como
+os cabeçalhos IP e ICMP puros.
+
+Como descobrir hosts ativos em um segmento de rede?
+
+Criando uma ferramenta UDP para descoberta de hosts
+O principal objetivo de nosso sniffer é realizar
+uma descoberta de hosts baseada em UDP em uma 
+rede alvo. Os invasores querem ser capazes de ver
+todos os alvos em potencial em uma rede para que
+possam focar seu redirecionamento e as tentativas
+de exploração de falhas.
+
+Criando um sniffing de pacotes multiplataforma
+(windows e Linux)
+
+IOCTL: input output control, faz a comunicação entre
+os programas do espaço do usuário e os componentes do 
+kernel do SO.
+
+
+ 
